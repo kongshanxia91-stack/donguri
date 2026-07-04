@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>どんぐりリハビリ</title>
+<meta name="description" content="リスと一緒にコツコツ続けるリハビリ記録アプリ">
+<meta name="theme-color" content="#8FA871">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="どんぐり">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ===== オンボーディング ===== -->
+<div id="onboarding" class="overlay hidden">
+  <div class="onboard-card">
+    <div class="onboard-step" data-step="1">
+      <div class="onboard-art">🐿️</div>
+      <h1>どんぐりリハビリへようこそ</h1>
+      <p>リハビリを1つ終えるたびに、どんぐりが1個たまります。<br>リスと一緒に、冬支度のようにコツコツ続けましょう。</p>
+      <button class="btn primary" data-next>はじめる</button>
+    </div>
+    <div class="onboard-step hidden" data-step="2">
+      <div class="onboard-art">🌰</div>
+      <h1>リスの名前をつけてください</h1>
+      <input type="text" id="squirrel-name-input" maxlength="10" placeholder="例:くるみ" autocomplete="off">
+      <button class="btn primary" data-finish>この名前にする</button>
+    </div>
+    <div class="onboard-step hidden" data-step="3">
+      <div class="onboard-art">📲</div>
+      <h1>ホーム画面に追加すると便利です</h1>
+      <p class="onboard-a2hs">Safariの共有ボタン <span class="share-icon">⬆︎</span> から<br>「ホーム画面に追加」を選ぶと、<br>アプリのように起動できます。</p>
+      <button class="btn primary" data-done>OK、はじめる</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ヘッダー ===== -->
+<header class="app-header">
+  <div class="header-stats">
+    <span class="stat-chip" id="chip-date"></span>
+    <span class="stat-chip streak" id="chip-streak" title="連続達成日数">🔥 <b>0</b>日</span>
+    <span class="stat-chip acorn" id="chip-acorns" title="どんぐり総数">🌰 <b>0</b></span>
+  </div>
+  <button class="icon-btn" id="btn-settings" aria-label="設定">⚙︎</button>
+</header>
+
+<!-- ===== メイン ===== -->
+<main id="main">
+
+  <!-- ホーム -->
+  <section class="view" id="view-home">
+    <div class="scene-wrap">
+      <canvas id="scene" aria-label="リスのようす"></canvas>
+      <div class="speech" id="speech" role="status"></div>
+      <div class="level-tag" id="level-tag"></div>
+    </div>
+    <div class="today-panel">
+      <div class="today-head">
+        <h2>今日のタスク</h2>
+        <span class="today-progress" id="today-progress"></span>
+      </div>
+      <ul class="task-check-list" id="today-list"></ul>
+      <div class="empty hidden" id="today-empty">
+        <p>今日のタスクはまだありません。</p>
+        <button class="btn ghost" data-goto="tasks">タスクを追加する</button>
+      </div>
+      <div class="all-done hidden" id="all-done-banner">
+        <span>🎉 今日のタスクをぜんぶ達成しました!</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- タスク管理 -->
+  <section class="view hidden" id="view-tasks">
+    <div class="view-head">
+      <h2>タスク管理</h2>
+      <button class="btn primary small" id="btn-add-task">＋ 追加</button>
+    </div>
+    <div id="task-groups"></div>
+    <div class="empty hidden" id="tasks-empty">
+      <p>タスクはまだありません。<br>「＋追加」から、いまのリハビリメニューを登録しましょう。</p>
+    </div>
+    <div class="archived-toggle">
+      <button class="btn ghost small" id="btn-show-archived">休止中のタスクを表示</button>
+    </div>
+    <div id="archived-list" class="hidden"></div>
+  </section>
+
+  <!-- 目標 -->
+  <section class="view hidden" id="view-goals">
+    <div class="view-head">
+      <h2>目標</h2>
+      <button class="btn primary small" id="btn-add-goal">＋ 追加</button>
+    </div>
+    <div id="goal-list"></div>
+    <div class="empty hidden" id="goals-empty">
+      <p>目標はまだありません。<br>「毎日つづける」でも「腕を90度上げる」でもOK。<br>小さな目標から設定してみましょう。</p>
+    </div>
+  </section>
+
+  <!-- コレクション -->
+  <section class="view hidden" id="view-collection">
+    <div class="view-head"><h2>コレクション</h2></div>
+    <div class="card level-card">
+      <div class="level-row">
+        <div class="level-icon" id="col-level-icon">🐿️</div>
+        <div>
+          <div class="level-name" id="col-level-name"></div>
+          <div class="level-next" id="col-level-next"></div>
+        </div>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="col-level-fill"></div></div>
+      <div class="level-steps" id="col-level-steps"></div>
+    </div>
+    <h3 class="sub-head">バッジ</h3>
+    <div class="badge-grid" id="badge-grid"></div>
+    <h3 class="sub-head">とくべつなどんぐり</h3>
+    <div class="badge-grid" id="rare-grid"></div>
+  </section>
+
+  <!-- 統計 -->
+  <section class="view hidden" id="view-stats">
+    <div class="view-head">
+      <h2>統計・履歴</h2>
+      <div class="month-nav">
+        <button class="icon-btn" id="cal-prev" aria-label="前の月">‹</button>
+        <span id="cal-month"></span>
+        <button class="icon-btn" id="cal-next" aria-label="次の月">›</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="heatmap" id="heatmap"></div>
+      <div class="heatmap-legend">うすい ◽◽ ▪▪ こい = 達成率</div>
+    </div>
+    <div class="card">
+      <h3>週ごとの達成率</h3>
+      <div class="bar-chart" id="weekly-chart"></div>
+    </div>
+    <div class="card">
+      <h3>タスク別の達成率(直近30日)</h3>
+      <div id="task-rates"></div>
+    </div>
+    <div class="card export-card">
+      <h3>記録の書き出し</h3>
+      <p class="hint">通院時に見せたり、バックアップに使えます。</p>
+      <div class="btn-row">
+        <button class="btn ghost" id="btn-export-csv">CSVで書き出す</button>
+        <button class="btn ghost" id="btn-export-json">JSONで書き出す</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- ===== タブバー ===== -->
+<nav class="tabbar" role="tablist">
+  <button class="tab active" data-view="home" role="tab"><span class="tab-icon">🏠</span><span>ホーム</span></button>
+  <button class="tab" data-view="tasks" role="tab"><span class="tab-icon">📝</span><span>タスク</span></button>
+  <button class="tab" data-view="goals" role="tab"><span class="tab-icon">🎯</span><span>目標</span></button>
+  <button class="tab" data-view="collection" role="tab"><span class="tab-icon">🏅</span><span>集める</span></button>
+  <button class="tab" data-view="stats" role="tab"><span class="tab-icon">📊</span><span>統計</span></button>
+</nav>
+
+<!-- ===== モーダル(タスク編集) ===== -->
+<div class="overlay hidden" id="task-modal">
+  <div class="modal">
+    <h2 id="task-modal-title">タスクを追加</h2>
+    <label>タスク名 <span class="req">必須</span>
+      <input type="text" id="tm-title" placeholder="例:肩を前に上げるストレッチ" maxlength="40">
+    </label>
+    <label>カテゴリ
+      <input type="text" id="tm-category" list="category-suggest" placeholder="例:肩 / 顔 / その他" maxlength="20">
+      <datalist id="category-suggest"></datalist>
+    </label>
+    <label>頻度
+      <select id="tm-frequency">
+        <option value="daily">毎日</option>
+        <option value="weekdays">曜日指定</option>
+        <option value="timesPerWeek">週◯回</option>
+      </select>
+    </label>
+    <div class="weekday-picker hidden" id="tm-weekdays">
+      <button type="button" data-d="0">日</button><button type="button" data-d="1">月</button><button type="button" data-d="2">火</button><button type="button" data-d="3">水</button><button type="button" data-d="4">木</button><button type="button" data-d="5">金</button><button type="button" data-d="6">土</button>
+    </div>
+    <label class="hidden" id="tm-times-wrap">週に
+      <select id="tm-times"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option><option>6</option></select> 回
+    </label>
+    <label>目標との紐付け
+      <select id="tm-goal"><option value="">なし</option></select>
+    </label>
+    <label>メモ
+      <textarea id="tm-memo" rows="2" placeholder="回数・角度などのメモ" maxlength="200"></textarea>
+    </label>
+    <div class="btn-row">
+      <button class="btn ghost" id="tm-cancel">キャンセル</button>
+      <button class="btn primary" id="tm-save">保存する</button>
+    </div>
+    <div class="btn-row danger-row hidden" id="tm-danger">
+      <button class="btn ghost small" id="tm-archive">休止する</button>
+      <button class="btn danger small" id="tm-delete">削除する</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== モーダル(目標編集) ===== -->
+<div class="overlay hidden" id="goal-modal">
+  <div class="modal">
+    <h2 id="goal-modal-title">目標を追加</h2>
+    <label>目標名 <span class="req">必須</span>
+      <input type="text" id="gm-title" placeholder="例:腕を90度まで上げる" maxlength="40">
+    </label>
+    <label>タイプ
+      <select id="gm-type">
+        <option value="habit">習慣目標(続けること)</option>
+        <option value="numeric">数値目標(値をめざす)</option>
+      </select>
+    </label>
+    <div id="gm-numeric-wrap" class="hidden">
+      <div class="row2">
+        <label>目標値 <input type="number" id="gm-target" step="any" placeholder="90"></label>
+        <label>単位 <input type="text" id="gm-unit" placeholder="度" maxlength="8"></label>
+      </div>
+      <label>現在値 <input type="number" id="gm-current" step="any" placeholder="45"></label>
+    </div>
+    <div class="row2">
+      <label>開始日 <input type="date" id="gm-start"></label>
+      <label>目標日(任意) <input type="date" id="gm-end"></label>
+    </div>
+    <div class="btn-row">
+      <button class="btn ghost" id="gm-cancel">キャンセル</button>
+      <button class="btn primary" id="gm-save">保存する</button>
+    </div>
+    <div class="btn-row danger-row hidden" id="gm-danger">
+      <button class="btn danger small" id="gm-delete">削除する</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== モーダル(設定) ===== -->
+<div class="overlay hidden" id="settings-modal">
+  <div class="modal">
+    <h2>設定</h2>
+    <label>リスの名前
+      <input type="text" id="set-name" maxlength="10">
+    </label>
+    <label>文字サイズ
+      <select id="set-fontsize">
+        <option value="normal">ふつう</option>
+        <option value="large">大きめ</option>
+        <option value="xlarge">とても大きい</option>
+      </select>
+    </label>
+    <label>配色
+      <select id="set-theme">
+        <option value="auto">端末の設定に合わせる</option>
+        <option value="light">ライト</option>
+        <option value="dark">ダーク</option>
+      </select>
+    </label>
+    <h3 class="sub-head">データ</h3>
+    <div class="btn-row wrap">
+      <button class="btn ghost small" id="set-export">バックアップを書き出す</button>
+      <button class="btn ghost small" id="set-import">バックアップを読み込む</button>
+      <input type="file" id="set-import-file" accept=".json" class="hidden">
+    </div>
+    <div class="btn-row danger-row">
+      <button class="btn danger small" id="set-reset">すべてのデータを消す</button>
+    </div>
+    <p class="hint">記録はすべてこの端末の中だけに保存されます。外部には送信されません。</p>
+    <div class="btn-row">
+      <button class="btn primary" id="set-close">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== モーダル(実施メモ) ===== -->
+<div class="overlay hidden" id="note-modal">
+  <div class="modal">
+    <h2 id="note-modal-title">今日のメモ</h2>
+    <textarea id="note-text" rows="3" placeholder="例:10回 × 3セット、痛みなし" maxlength="200"></textarea>
+    <div class="btn-row">
+      <button class="btn ghost" id="note-cancel">キャンセル</button>
+      <button class="btn primary" id="note-save">保存する</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== お祝いオーバーレイ ===== -->
+<div class="celebrate hidden" id="celebrate">
+  <div class="celebrate-inner">
+    <div class="celebrate-emoji" id="celebrate-emoji">🌰</div>
+    <div class="celebrate-title" id="celebrate-title"></div>
+    <div class="celebrate-sub" id="celebrate-sub"></div>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden" role="status"></div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
