@@ -136,6 +136,7 @@ async function renderHome() {
 
   $('#today-progress').textContent = due.length ? `${doneCount} / ${due.length} 完了` : '';
   $('#all-done-banner').classList.toggle('hidden', !(due.length > 0 && doneCount === due.length));
+  scene?.setStash(doneCount);
 }
 
 async function toggleTask(task, btnEl) {
@@ -150,6 +151,7 @@ async function toggleTask(task, btnEl) {
     const { events } = await Game.onTaskCompleted();
     flyAcorn(btnEl);
     scene.happy();
+    scene.stashAcorn();
     say(cheer(), 3000);
     await handleEvents(null, events);
 
