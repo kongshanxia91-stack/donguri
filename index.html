@@ -325,10 +325,12 @@
     </div>
   </div>
   <div class="game-combo hidden" id="game-combo"></div>
+  <div class="game-power hidden" id="game-power"></div>
   <div class="game-countdown hidden" id="game-countdown"></div>
   <div class="game-panel" id="game-start">
     <h2>🐿️ どんぐりラン</h2>
-    <p>スワイプ ← → でレーン移動<br>スワイプ ↑ でジャンプ、↓ でスライディング<br>丸太はジャンプ、枝はスライディング、岩はレーン変更でよけよう<br>✨金のどんぐりでラッキータイム、💠シールドで1回だけ守ってもらえるよ</p>
+    <p>スワイプ ← → でレーン移動<br>スワイプ ↑ でジャンプ、↓ でスライディング<br>丸太はジャンプ、枝はスライディング、岩はレーン変更でよけよう<br>✨金のどんぐり 💠シールド 🧲マグネット ⭐ダッシュを集めよう</p>
+    <div class="game-missions" id="game-missions"></div>
     <button class="btn primary" id="game-tap-start">タップしてスタート</button>
   </div>
   <div class="game-panel hidden" id="game-pause-panel">
@@ -339,10 +341,13 @@
     </div>
   </div>
   <div class="game-panel hidden" id="game-over">
+    <div class="game-rank" id="game-rank"></div>
     <h2>おつかれさま!</h2>
     <div class="game-over-score" id="game-over-score"></div>
     <div class="game-over-combo" id="game-over-combo"></div>
     <div class="hint" id="game-over-best"></div>
+    <div class="game-missions" id="game-over-missions"></div>
+    <div class="game-history" id="game-history"></div>
     <div class="btn-row" style="justify-content:center">
       <button class="btn ghost" id="game-close2">とじる</button>
       <button class="btn primary" id="game-retry">もういちど</button>

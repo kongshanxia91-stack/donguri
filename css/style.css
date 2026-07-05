@@ -429,3 +429,54 @@ main{ max-width:760px; margin:0 auto; padding:0 14px; }
   z-index:4; font-size:3.4rem; font-weight:800; color:#fff;
   text-shadow:0 4px 18px rgba(0,0,0,.45); pointer-events:none;
 }
+
+/* パワーアップ残り時間表示 */
+.game-power{
+  position:absolute; left:50%; top:calc(58px + env(safe-area-inset-top));
+  transform:translateX(-50%); z-index:2; pointer-events:none;
+  display:flex; gap:8px; font-weight:800; font-size:.95rem; color:#fff;
+  text-shadow:0 1px 6px rgba(0,0,0,.4);
+}
+.game-power span{
+  background:rgba(0,0,0,.28); border-radius:999px; padding:.15em .7em;
+}
+
+/* きょうのミッション */
+.game-missions{ margin:0 0 16px; display:flex; flex-direction:column; gap:6px; }
+.game-missions:empty{ display:none; }
+.mission-item{
+  display:flex; align-items:center; gap:8px; text-align:left;
+  background:rgba(0,0,0,.05); border-radius:12px; padding:.45em .8em;
+  font-size:.86rem; font-weight:600; color:var(--bark-soft);
+}
+.mission-item.done{ background:rgba(214,164,74,.18); color:var(--bark); }
+.mission-item .mission-mark{ flex:none; }
+.mission-item.just-done{ animation:missionDone .8s cubic-bezier(.2,1.4,.3,1); }
+@keyframes missionDone{
+  0%{ transform:scale(1); }
+  40%{ transform:scale(1.06); }
+  100%{ transform:scale(1); }
+}
+
+/* リザルトのランク */
+.game-rank{
+  font-size:2.6rem; font-weight:900; line-height:1; margin-bottom:6px;
+  letter-spacing:.02em;
+}
+.game-rank:empty{ display:none; }
+.game-rank .rank-letter{ font-size:3.4rem; }
+.game-rank.rank-C{ color:#9a9186; }
+.game-rank.rank-B{ color:#5f8a4a; }
+.game-rank.rank-A{ color:#4a90c2; }
+.game-rank.rank-S{ color:#d6a44a; text-shadow:0 2px 12px rgba(214,164,74,.45); }
+.game-rank.rank-SS{ color:#c25b4e; text-shadow:0 2px 14px rgba(194,91,78,.5); }
+
+/* ハイスコア履歴 */
+.game-history{ margin:0 0 14px; font-size:.82rem; color:var(--bark-soft); }
+.game-history:empty{ display:none; }
+.game-history ol{ margin:4px 0 0; padding:0; list-style:none; }
+.game-history li{
+  display:flex; justify-content:space-between; gap:10px;
+  padding:.18em .6em; border-radius:8px;
+}
+.game-history li.current-run{ background:rgba(214,164,74,.18); font-weight:700; color:var(--bark); }

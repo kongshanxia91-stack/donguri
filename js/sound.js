@@ -23,6 +23,9 @@ export function isMuted() { return muted; }
 export function setMuted(v) {
   muted = !!v;
   localStorage.setItem(MUTE_KEY, muted ? '1' : '0');
+  if (bgmGain) {
+    try { bgmGain.gain.setTargetAtTime(muted ? 0 : BGM_VOLUME, getCtx().currentTime, 0.05); } catch { /* noop */ }
+  }
 }
 export function toggleMute() { setMuted(!muted); return muted; }
 
@@ -98,3 +101,139 @@ export function sfxMilestone() {
   [660, 880].forEach((f, i) => tone(f, 0.16, { type: 'sine', gain: 0.12, delay: i * 0.1 }));
 }
 export function sfxClick() { tone(600, 0.05, { type: 'sine', gain: 0.08 }); }
+export function sfxMagnet() {
+  [440, 550, 660].forEach((f, i) => tone(f, 0.1, { type: 'triangle', gain: 0.13, delay: i * 0.06 }));
+}
+export function sfxDash() {
+  tone(300, 0.35, { type: 'sawtooth', sweep: 600, gain: 0.15 });
+  noise(0.3, { gain: 0.08, filterFreq: 2200, delay: 0.05 });
+}
+export function sfxNearMiss() { noise(0.09, { gain: 0.1, filterFreq: 3000 }); }
+export function sfxSmash() {
+  noise(0.2, { gain: 0.18, filterFreq: 700 });
+  tone(180, 0.18, { type: 'square', sweep: -80, gain: 0.12 });
+}
+export function sfxMissionDone() {
+  [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.18, { type: 'triangle', gain: 0.14, delay: i * 0.11 }));
+}
+
+// ---- どんぐりラン BGM(こちらも外部音源なしで合成・ループ生成) ----
+const BGM_VOLUME = 0.16;
+const BGM_STEP_SEC = 0.19;
+// ベース(4小節ループ、C-Am-F-G進行)+ 5音音階の明るいメロディ
+const BGM_BASS = [
+  130.81, 0, 130.81, 0, 130.81, 0, 130.81, 0,
+  110.00, 0, 110.00, 0, 110.00, 0, 110.00, 0,
+  87.31, 0, 87.31, 0, 87.31, 0, 87.31, 0,
+  98.00, 0, 98.00, 0, 98.00, 0, 98.00, 0,
+];
+const BGM_MELODY = [
+  659.25, 0, 587.33, 0, 523.25, 0, 587.33, 0,
+  659.25, 0, 783.99, 0, 659.25, 0, 587.33, 0,
+  523.25, 0, 587.33, 0, 659.25, 0, 523.25, 0,
+  493.88, 0, 587.33, 0, 523.25, 0, 440.00, 0,
+];
+
+let bgmGain = null;
+let bgmPlaying = false;
+let bgmStepIndex = 0;
+let bgmNextTime = 0;
+let bgmTimer = null;
+
+function ensureBgmGain(c) {
+  if (!bgmGain) {
+    bgmGain = c.createGain();
+    bgmGain.gain.value = muted ? 0 : BGM_VOLUME;
+    bgmGain.connect(c.destination);
+  }
+  return bgmGain;
+}
+
+function bgmNote(c, master, freq, t0, dur, type, gainScale) {
+  const osc = c.createOscillator();
+  const g = c.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, t0);
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(0.5 * gainScale, t0 + 0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  osc.connect(g).connect(master);
+  osc.start(t0);
+  osc.stop(t0 + dur + 0.02);
+}
+
+function bgmKick(c, master, t0) {
+  const osc = c.createOscillator();
+  const g = c.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(150, t0);
+  osc.frequency.exponentialRampToValueAtTime(45, t0 + 0.1);
+  g.gain.setValueAtTime(0.55, t0);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.13);
+  osc.connect(g).connect(master);
+  osc.start(t0);
+  osc.stop(t0 + 0.15);
+}
+
+function bgmHat(c, master, t0) {
+  const dur = 0.05;
+  const bufSize = Math.max(1, Math.floor(c.sampleRate * dur));
+  const buf = c.createBuffer(1, bufSize, c.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < bufSize; i++) data[i] = Math.random() * 2 - 1;
+  const src = c.createBufferSource();
+  src.buffer = buf;
+  const filt = c.createBiquadFilter();
+  filt.type = 'highpass';
+  filt.frequency.value = 6500;
+  const g = c.createGain();
+  g.gain.setValueAtTime(0.22, t0);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  src.connect(filt).connect(g).connect(master);
+  src.start(t0);
+  src.stop(t0 + dur + 0.02);
+}
+
+function scheduleBgm() {
+  let c;
+  try { c = getCtx(); } catch { return; }
+  const master = ensureBgmGain(c);
+  while (bgmNextTime < c.currentTime + 0.25) {
+    const i = bgmStepIndex % BGM_BASS.length;
+    const bf = BGM_BASS[i];
+    if (bf) bgmNote(c, master, bf, bgmNextTime, BGM_STEP_SEC * 3.4, 'triangle', 0.5);
+    const mf = BGM_MELODY[i];
+    if (mf) bgmNote(c, master, mf, bgmNextTime, BGM_STEP_SEC * 0.9, 'sine', 0.85);
+    // ドラム:キックは1拍ごと・ハイハットは裏拍で走る疾走感を出す
+    if (i % 4 === 0) bgmKick(c, master, bgmNextTime);
+    if (i % 2 === 1) bgmHat(c, master, bgmNextTime);
+    bgmNextTime += BGM_STEP_SEC;
+    bgmStepIndex++;
+  }
+}
+
+/** ゲーム開始(カウントダウン完了)で呼ぶ。すでに再生中なら何もしない */
+export function startBgm() {
+  if (bgmPlaying) return;
+  let c;
+  try { c = getCtx(); } catch { return; }
+  bgmPlaying = true;
+  const master = ensureBgmGain(c);
+  master.gain.cancelScheduledValues(c.currentTime);
+  master.gain.setValueAtTime(muted ? 0 : BGM_VOLUME, c.currentTime);
+  bgmStepIndex = 0;
+  bgmNextTime = c.currentTime + 0.05;
+  scheduleBgm();
+  bgmTimer = setInterval(scheduleBgm, 120);
+}
+
+/** ゲームオーバー・一時停止・閉じるで呼ぶ */
+export function stopBgm() {
+  if (!bgmPlaying) return;
+  bgmPlaying = false;
+  clearInterval(bgmTimer);
+  bgmTimer = null;
+  if (bgmGain) {
+    try { bgmGain.gain.setTargetAtTime(0, getCtx().currentTime, 0.08); } catch { /* noop */ }
+  }
+}
