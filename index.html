@@ -117,6 +117,16 @@
       <div class="progress-bar"><div class="progress-fill" id="col-level-fill"></div></div>
       <div class="level-steps" id="col-level-steps"></div>
     </div>
+    <div class="card minigame-card">
+      <div class="minigame-card-row">
+        <div class="minigame-card-icon">🏃🐿️</div>
+        <div>
+          <div class="minigame-card-title">どんぐりラン</div>
+          <div class="hint">スワイプで左右移動・ジャンプ・スライディング。木や岩をよけてどんぐりを集めよう。スコアは本編には影響しません。</div>
+        </div>
+      </div>
+      <button class="btn primary" id="btn-play-minigame" style="width:100%; margin-top:12px;">🎮 ミニゲームで遊ぶ</button>
+    </div>
     <h3 class="sub-head">バッジ</h3>
     <div class="badge-grid" id="badge-grid"></div>
     <h3 class="sub-head">とくべつなどんぐり</h3>
@@ -299,6 +309,46 @@
 </div>
 
 <div id="toast" class="toast hidden" role="status"></div>
+
+<!-- ===== ミニゲーム:どんぐりラン ===== -->
+<div class="game-modal hidden" id="game-modal">
+  <canvas id="game-canvas" aria-label="どんぐりランのようす"></canvas>
+  <div class="game-hud">
+    <button class="icon-btn" id="game-close" aria-label="閉じる">✕</button>
+    <div class="game-score" id="game-score">🌰 0</div>
+    <div class="game-hud-right">
+      <div class="game-best" id="game-best"></div>
+      <div class="game-hud-btns">
+        <button class="icon-btn small" id="game-pause" aria-label="一時停止">⏸</button>
+        <button class="icon-btn small" id="game-mute" aria-label="サウンド切替">🔊</button>
+      </div>
+    </div>
+  </div>
+  <div class="game-combo hidden" id="game-combo"></div>
+  <div class="game-countdown hidden" id="game-countdown"></div>
+  <div class="game-panel" id="game-start">
+    <h2>🐿️ どんぐりラン</h2>
+    <p>スワイプ ← → でレーン移動<br>スワイプ ↑ でジャンプ、↓ でスライディング<br>丸太はジャンプ、枝はスライディング、岩はレーン変更でよけよう<br>✨金のどんぐりでラッキータイム、💠シールドで1回だけ守ってもらえるよ</p>
+    <button class="btn primary" id="game-tap-start">タップしてスタート</button>
+  </div>
+  <div class="game-panel hidden" id="game-pause-panel">
+    <h2>一時停止</h2>
+    <div class="btn-row" style="justify-content:center">
+      <button class="btn ghost" id="game-quit">やめる</button>
+      <button class="btn primary" id="game-resume">つづける</button>
+    </div>
+  </div>
+  <div class="game-panel hidden" id="game-over">
+    <h2>おつかれさま!</h2>
+    <div class="game-over-score" id="game-over-score"></div>
+    <div class="game-over-combo" id="game-over-combo"></div>
+    <div class="hint" id="game-over-best"></div>
+    <div class="btn-row" style="justify-content:center">
+      <button class="btn ghost" id="game-close2">とじる</button>
+      <button class="btn primary" id="game-retry">もういちど</button>
+    </div>
+  </div>
+</div>
 
 <script type="module" src="js/main.js"></script>
 </body>

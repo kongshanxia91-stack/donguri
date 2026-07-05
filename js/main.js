@@ -9,6 +9,7 @@ import { initTasks, render as renderTasks, freqLabel } from './tasks.js';
 import { initGoals, render as renderGoals } from './goals.js';
 import { render as renderCollection } from './collection.js';
 import { initStats, render as renderStats } from './stats.js';
+import { initMinigame, openMinigame } from './minigame.js';
 
 let scene = null;
 let profile = null;
@@ -35,6 +36,8 @@ async function boot() {
   initStats();
   initSettings();
   initNoteModal();
+  initMinigame();
+  $('#btn-play-minigame').addEventListener('click', () => openMinigame());
 
   // ストリーク整合(未達成のまま日付が変わっていたらリセット・6.4)
   profile = await Game.reconcileStreak();

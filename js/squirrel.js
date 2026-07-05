@@ -256,152 +256,18 @@ export class SquirrelScene {
   }
 
   _buildSquirrel() {
-    const g = new THREE.Group();
-    const fur = new THREE.MeshToonMaterial({ color: V.fur });
-    const furD = new THREE.MeshToonMaterial({ color: V.furD });
-    const cream = new THREE.MeshToonMaterial({ color: V.cream });
-    const dark = new THREE.MeshStandardMaterial({ color: DARK, roughness: .4 });
+    const parts = buildSquirrelModel(THREE);
+    this.head = parts.head;
+    this.mouth = parts.mouth;
+    this.eyes = parts.eyes;
+    this.ears = parts.ears;
+    this.heldAcorn = parts.heldAcorn;
+    this.tail = parts.tail;
+    this.tailSegs = parts.tailSegs;
+    this.scarf = parts.scarf;
+    this.crown = parts.crown;
 
-    // 胴体
-    const body = new THREE.Mesh(new THREE.SphereGeometry(0.62, 24, 20), fur);
-    body.scale.set(V.bodyW, 1.12 * V.bodyH, 0.92 * V.bodyW);
-    body.position.y = 0.66; body.castShadow = true;
-    g.add(body);
-    const belly = new THREE.Mesh(new THREE.SphereGeometry(0.48, 20, 16), cream);
-    belly.scale.set(0.82 * V.bodyW, V.bodyH, 0.6); belly.position.set(0, 0.6, 0.26 * V.bodyW);
-    g.add(belly);
-    // ふわふわ:毛玉の房
-    for (const [x, y, z, r] of [[-0.42, 0.9, 0.1, 0.2], [0.42, 0.9, 0.1, 0.2], [0, 0.42, 0.42, 0.22], [-0.3, 0.45, -0.35, 0.24], [0.3, 0.45, -0.35, 0.24]]) {
-      const tuft = new THREE.Mesh(new THREE.SphereGeometry(r, 12, 10), fur);
-      tuft.position.set(x, y, z);
-      g.add(tuft);
-    }
-
-    // 頭(ちび頭ベース)
-    const head = new THREE.Group();
-    const skull = new THREE.Mesh(new THREE.SphereGeometry(0.46, 24, 20), fur);
-    skull.scale.set(1.04, 0.96, 0.95); skull.castShadow = true;
-    head.add(skull);
-    // ほっぺ(まるく大きく)+チーク
-    for (const s of [-1, 1]) {
-      const cheek = new THREE.Mesh(new THREE.SphereGeometry(0.19, 14, 12), cream);
-      cheek.position.set(0.21 * s, -0.16, 0.33);
-      head.add(cheek);
-      const blush = new THREE.Mesh(new THREE.CircleGeometry(0.085, 12),
-        new THREE.MeshBasicMaterial({ color: V.blush, transparent: true, opacity: 0.75 }));
-      blush.position.set(0.31 * s, -0.04, 0.41);
-      blush.lookAt(0.95 * s, 0.05, 3);
-      head.add(blush);
-    }
-    // マズル・鼻
-    const muzzle = new THREE.Mesh(new THREE.SphereGeometry(V.muzzle, 14, 12), cream);
-    muzzle.position.set(0, -0.11, 0.4); muzzle.scale.set(1.15, 0.8, 0.8);
-    head.add(muzzle);
-    const nose = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 8),
-      new THREE.MeshStandardMaterial({ color: 0x8A5B44, roughness: .5 }));
-    nose.position.set(0, -0.04, 0.51);
-    head.add(nose);
-    // にっこり口(トーラスの下半分)
-    this.mouth = new THREE.Mesh(
-      new THREE.TorusGeometry(0.06, 0.014, 6, 12, Math.PI),
-      new THREE.MeshBasicMaterial({ color: DARK }));
-    this.mouth.position.set(0, -0.13, 0.49);
-    this.mouth.rotation.z = Math.PI;
-    head.add(this.mouth);
-    // おおきな目 + ダブルハイライト
-    this.eyes = [];
-    for (const s of [-1, 1]) {
-      const eye = new THREE.Group();
-      const ball = new THREE.Mesh(new THREE.SphereGeometry(V.eyeR, 14, 12), dark);
-      const glint = new THREE.Mesh(new THREE.SphereGeometry(V.eyeR * 0.34, 8, 6),
-        new THREE.MeshBasicMaterial({ color: 0xffffff }));
-      glint.position.set(V.eyeR * 0.34, V.eyeR * 0.4, V.eyeR * 0.72);
-      const glint2 = new THREE.Mesh(new THREE.SphereGeometry(V.eyeR * 0.16, 8, 6),
-        new THREE.MeshBasicMaterial({ color: 0xffffff }));
-      glint2.position.set(-V.eyeR * 0.38, -V.eyeR * 0.3, V.eyeR * 0.75);
-      eye.add(ball, glint, glint2);
-      eye.position.set(0.17 * s, 0.09, 0.4);
-      head.add(eye); this.eyes.push(eye);
-    }
-    // 耳(ぴこぴこ動かすので保持)
-    this.ears = [];
-    for (const s of [-1, 1]) {
-      const earG = new THREE.Group();
-      const ear = new THREE.Mesh(new THREE.ConeGeometry(V.earR, V.earR * 2, 10), fur);
-      ear.position.y = V.earR;
-      const inner = new THREE.Mesh(new THREE.ConeGeometry(V.earR * 0.55, V.earR * 1.2, 8), cream);
-      inner.position.set(0, V.earR * 0.9, 0.04);
-      earG.add(ear, inner);
-      earG.position.set(0.26 * s, 0.38, 0.02);
-      earG.rotation.z = -0.25 * s;
-      head.add(earG); this.ears.push(earG);
-    }
-    head.scale.setScalar(V.headScale);
-    head.position.set(0, V.headY, 0.12);
-    g.add(head);
-    this.head = head;
-
-    // うで+どんぐり
-    for (const s of [-1, 1]) {
-      const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.09, 0.22, 6, 10), furD);
-      arm.position.set(0.3 * s, 0.84, 0.42); arm.rotation.set(1.2, 0, -0.7 * s);
-      arm.castShadow = true;
-      g.add(arm);
-    }
-    this.heldAcorn = makeAcorn(0.2);
-    this.heldAcorn.position.set(0, 0.8, 0.56);
-    g.add(this.heldAcorn);
-
-    // あし
-    for (const s of [-1, 1]) {
-      const foot = new THREE.Mesh(new THREE.SphereGeometry(0.16, 12, 10), furD);
-      foot.scale.set(1, 0.55, 1.5); foot.position.set(0.3 * s, 0.1, 0.28);
-      foot.castShadow = true;
-      g.add(foot);
-    }
-
-    // しっぽ(ふさ数を増やしてもっとふわふわ)
-    this.tail = new THREE.Group();
-    const pts = [
-      [0, 0.32, -0.5, 0.28], [0, 0.62, -0.72, 0.36], [0, 1.0, -0.8, 0.43],
-      [0, 1.42, -0.78, 0.47], [0, 1.8, -0.62, 0.46], [0, 2.08, -0.34, 0.4],
-      [0, 2.22, -0.02, 0.3],
-    ];
-    this.tailSegs = [];
-    for (const [x, y, z, r] of pts) {
-      const seg = new THREE.Mesh(new THREE.SphereGeometry(r * V.tailFluff, 16, 14), fur);
-      seg.position.set(x, y, z); seg.castShadow = true;
-      this.tail.add(seg); this.tailSegs.push(seg);
-    }
-    const tip = new THREE.Mesh(new THREE.SphereGeometry(0.2 * V.tailFluff, 12, 10), cream);
-    tip.position.set(0, 2.34, 0.1);
-    this.tail.add(tip);
-    g.add(this.tail);
-
-    // ---- レベル演出パーツ(最初は非表示) ----
-    // Lv3: マフラー
-    this.scarf = new THREE.Group();
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.4, 0.11, 10, 22),
-      new THREE.MeshToonMaterial({ color: 0xc25b4e }));
-    ring.rotation.x = Math.PI / 2; ring.position.y = 1.1;
-    const tail1 = new THREE.Mesh(new THREE.CapsuleGeometry(0.09, 0.3, 6, 10),
-      new THREE.MeshToonMaterial({ color: 0xc25b4e }));
-    tail1.position.set(0.18, 0.86, 0.42); tail1.rotation.z = 0.2;
-    this.scarf.add(ring, tail1); this.scarf.visible = false;
-    g.add(this.scarf);
-    // Lv5: 葉っぱの冠
-    this.crown = new THREE.Group();
-    for (let i = 0; i < 5; i++) {
-      const leaf = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.2, 6),
-        new THREE.MeshToonMaterial({ color: 0xe0a85c }));
-      const a = (i / 5) * Math.PI * 2;
-      leaf.position.set(Math.cos(a) * 0.24, 0.52, Math.sin(a) * 0.24);
-      leaf.rotation.x = 0.3;
-      this.crown.add(leaf);
-    }
-    this.crown.visible = false;
-    head.add(this.crown);
-
+    const g = parts.group;
     // 位置(お散歩の基準点)
     this.homeSpot = { x: 0.4, z: 0.6 };
     g.position.set(this.homeSpot.x, 0, this.homeSpot.z);
@@ -717,7 +583,7 @@ export class SquirrelScene {
 }
 
 /** どんぐりを1個つくる(本体+傘+ちょこんとした柄) */
-function makeAcorn(size = 0.2) {
+export function makeAcorn(size = 0.2) {
   const g = new THREE.Group();
   const body = new THREE.Mesh(
     new THREE.SphereGeometry(size, 14, 12),
@@ -734,4 +600,177 @@ function makeAcorn(size = 0.2) {
   stem.position.y = size * 0.95;
   g.add(body, cap, stem);
   return g;
+}
+
+/**
+ * ふわふわリス本体(B案)を組み立てる。SquirrelScene とミニゲームで共有。
+ * @returns {{group:THREE.Group, head:THREE.Group, mouth:THREE.Mesh, eyes:THREE.Group[],
+ *   ears:THREE.Group[], heldAcorn:THREE.Group, tail:THREE.Group, tailSegs:THREE.Mesh[],
+ *   scarf:THREE.Group, crown:THREE.Group}}
+ */
+export function buildSquirrelModel(THREE) {
+  const g = new THREE.Group();
+  const fur = new THREE.MeshToonMaterial({ color: V.fur });
+  const furD = new THREE.MeshToonMaterial({ color: V.furD });
+  const cream = new THREE.MeshToonMaterial({ color: V.cream });
+  const dark = new THREE.MeshStandardMaterial({ color: DARK, roughness: .4 });
+
+  // 胴体
+  const body = new THREE.Mesh(new THREE.SphereGeometry(0.62, 24, 20), fur);
+  body.scale.set(V.bodyW, 1.12 * V.bodyH, 0.92 * V.bodyW);
+  body.position.y = 0.66; body.castShadow = true;
+  g.add(body);
+  const belly = new THREE.Mesh(new THREE.SphereGeometry(0.48, 20, 16), cream);
+  belly.scale.set(0.82 * V.bodyW, V.bodyH, 0.6); belly.position.set(0, 0.6, 0.26 * V.bodyW);
+  g.add(belly);
+  // ふわふわ:毛玉の房
+  for (const [x, y, z, r] of [[-0.42, 0.9, 0.1, 0.2], [0.42, 0.9, 0.1, 0.2], [0, 0.42, 0.42, 0.22], [-0.32, 0.44, -0.38, 0.3], [0.32, 0.44, -0.38, 0.3]]) {
+    const tuft = new THREE.Mesh(new THREE.SphereGeometry(r, 12, 10), fur);
+    tuft.position.set(x, y, z);
+    g.add(tuft);
+  }
+  // うしろ姿をかわいくする、おしりのハート型クリームパッチ+しっぽの付け根のポフ
+  for (const [x, y] of [[-0.1, 0.52], [0.1, 0.52]]) {
+    const lobe = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 10), cream);
+    lobe.scale.set(1, 1, 0.55);
+    lobe.position.set(x, y, -0.52);
+    g.add(lobe);
+  }
+  const rumpPoint = new THREE.Mesh(new THREE.SphereGeometry(0.095, 10, 8), cream);
+  rumpPoint.scale.set(1, 1, 0.55);
+  rumpPoint.position.set(0, 0.4, -0.5);
+  g.add(rumpPoint);
+  const tailPoof = new THREE.Mesh(new THREE.SphereGeometry(0.3, 14, 12), fur);
+  tailPoof.scale.set(1.05, 0.95, 1);
+  tailPoof.position.set(0, 0.48, -0.42);
+  tailPoof.castShadow = true;
+  g.add(tailPoof);
+
+  // 頭(ちび頭ベース)
+  const head = new THREE.Group();
+  const skull = new THREE.Mesh(new THREE.SphereGeometry(0.46, 24, 20), fur);
+  skull.scale.set(1.04, 0.96, 0.95); skull.castShadow = true;
+  head.add(skull);
+  // ほっぺ(まるく大きく)+チーク
+  for (const s of [-1, 1]) {
+    const cheek = new THREE.Mesh(new THREE.SphereGeometry(0.19, 14, 12), cream);
+    cheek.position.set(0.21 * s, -0.16, 0.33);
+    head.add(cheek);
+    const blush = new THREE.Mesh(new THREE.CircleGeometry(0.085, 12),
+      new THREE.MeshBasicMaterial({ color: V.blush, transparent: true, opacity: 0.75 }));
+    blush.position.set(0.31 * s, -0.04, 0.41);
+    blush.lookAt(0.95 * s, 0.05, 3);
+    head.add(blush);
+  }
+  // マズル・鼻
+  const muzzle = new THREE.Mesh(new THREE.SphereGeometry(V.muzzle, 14, 12), cream);
+  muzzle.position.set(0, -0.11, 0.4); muzzle.scale.set(1.15, 0.8, 0.8);
+  head.add(muzzle);
+  const nose = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 8),
+    new THREE.MeshStandardMaterial({ color: 0x8A5B44, roughness: .5 }));
+  nose.position.set(0, -0.04, 0.51);
+  head.add(nose);
+  // にっこり口(トーラスの下半分)
+  const mouth = new THREE.Mesh(
+    new THREE.TorusGeometry(0.06, 0.014, 6, 12, Math.PI),
+    new THREE.MeshBasicMaterial({ color: DARK }));
+  mouth.position.set(0, -0.13, 0.49);
+  mouth.rotation.z = Math.PI;
+  head.add(mouth);
+  // おおきな目 + ダブルハイライト
+  const eyes = [];
+  for (const s of [-1, 1]) {
+    const eye = new THREE.Group();
+    const ball = new THREE.Mesh(new THREE.SphereGeometry(V.eyeR, 14, 12), dark);
+    const glint = new THREE.Mesh(new THREE.SphereGeometry(V.eyeR * 0.34, 8, 6),
+      new THREE.MeshBasicMaterial({ color: 0xffffff }));
+    glint.position.set(V.eyeR * 0.34, V.eyeR * 0.4, V.eyeR * 0.72);
+    const glint2 = new THREE.Mesh(new THREE.SphereGeometry(V.eyeR * 0.16, 8, 6),
+      new THREE.MeshBasicMaterial({ color: 0xffffff }));
+    glint2.position.set(-V.eyeR * 0.38, -V.eyeR * 0.3, V.eyeR * 0.75);
+    eye.add(ball, glint, glint2);
+    eye.position.set(0.17 * s, 0.09, 0.4);
+    head.add(eye); eyes.push(eye);
+  }
+  // 耳(ぴこぴこ動かすので保持)
+  const ears = [];
+  for (const s of [-1, 1]) {
+    const earG = new THREE.Group();
+    const ear = new THREE.Mesh(new THREE.ConeGeometry(V.earR, V.earR * 2, 10), fur);
+    ear.position.y = V.earR;
+    const inner = new THREE.Mesh(new THREE.ConeGeometry(V.earR * 0.55, V.earR * 1.2, 8), cream);
+    inner.position.set(0, V.earR * 0.9, 0.04);
+    const tip = new THREE.Mesh(new THREE.SphereGeometry(V.earR * 0.32, 8, 6), cream);
+    tip.position.set(0, V.earR * 1.9, 0);
+    earG.add(ear, inner, tip);
+    earG.position.set(0.26 * s, 0.38, 0.02);
+    earG.rotation.z = -0.25 * s;
+    head.add(earG); ears.push(earG);
+  }
+  head.scale.setScalar(V.headScale);
+  head.position.set(0, V.headY, 0.12);
+  g.add(head);
+
+  // うで+どんぐり
+  for (const s of [-1, 1]) {
+    const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.09, 0.22, 6, 10), furD);
+    arm.position.set(0.3 * s, 0.84, 0.42); arm.rotation.set(1.2, 0, -0.7 * s);
+    arm.castShadow = true;
+    g.add(arm);
+  }
+  const heldAcorn = makeAcorn(0.2);
+  heldAcorn.position.set(0, 0.8, 0.56);
+  g.add(heldAcorn);
+
+  // あし
+  for (const s of [-1, 1]) {
+    const foot = new THREE.Mesh(new THREE.SphereGeometry(0.16, 12, 10), furD);
+    foot.scale.set(1, 0.55, 1.5); foot.position.set(0.3 * s, 0.1, 0.28);
+    foot.castShadow = true;
+    g.add(foot);
+  }
+
+  // しっぽ(ふさ数を増やしてもっとふわふわ)
+  const tail = new THREE.Group();
+  const pts = [
+    [0, 0.32, -0.5, 0.28], [0, 0.62, -0.72, 0.36], [0, 1.0, -0.8, 0.43],
+    [0, 1.42, -0.78, 0.47], [0, 1.8, -0.62, 0.46], [0, 2.08, -0.34, 0.4],
+    [0, 2.22, -0.02, 0.3],
+  ];
+  const tailSegs = [];
+  for (const [x, y, z, r] of pts) {
+    const seg = new THREE.Mesh(new THREE.SphereGeometry(r * V.tailFluff, 16, 14), fur);
+    seg.position.set(x, y, z); seg.castShadow = true;
+    tail.add(seg); tailSegs.push(seg);
+  }
+  const tip = new THREE.Mesh(new THREE.SphereGeometry(0.2 * V.tailFluff, 12, 10), cream);
+  tip.position.set(0, 2.34, 0.1);
+  tail.add(tip);
+  g.add(tail);
+
+  // ---- レベル演出パーツ(最初は非表示) ----
+  // Lv3: マフラー
+  const scarf = new THREE.Group();
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.4, 0.11, 10, 22),
+    new THREE.MeshToonMaterial({ color: 0xc25b4e }));
+  ring.rotation.x = Math.PI / 2; ring.position.y = 1.1;
+  const scarfTail = new THREE.Mesh(new THREE.CapsuleGeometry(0.09, 0.3, 6, 10),
+    new THREE.MeshToonMaterial({ color: 0xc25b4e }));
+  scarfTail.position.set(0.18, 0.86, 0.42); scarfTail.rotation.z = 0.2;
+  scarf.add(ring, scarfTail); scarf.visible = false;
+  g.add(scarf);
+  // Lv5: 葉っぱの冠
+  const crown = new THREE.Group();
+  for (let i = 0; i < 5; i++) {
+    const leaf = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.2, 6),
+      new THREE.MeshToonMaterial({ color: 0xe0a85c }));
+    const a = (i / 5) * Math.PI * 2;
+    leaf.position.set(Math.cos(a) * 0.24, 0.52, Math.sin(a) * 0.24);
+    leaf.rotation.x = 0.3;
+    crown.add(leaf);
+  }
+  crown.visible = false;
+  head.add(crown);
+
+  return { group: g, head, mouth, eyes, ears, heldAcorn, tail, tailSegs, scarf, crown };
 }
