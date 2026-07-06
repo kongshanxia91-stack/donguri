@@ -1,7 +1,7 @@
 // ============================================================
 // sw.js — Service Worker(オフラインファースト・仕様書9章)
 // ============================================================
-const CACHE = 'donguri-v3';
+const CACHE = 'donguri-v4';
 const ASSETS = [
   './',
   './index.html',
@@ -17,6 +17,8 @@ const ASSETS = [
   './js/stats.js',
   './js/minigame.js',
   './js/sound.js',
+  './js/video.js',
+  './js/youtube.js',
   './vendor/three.module.js',
   './manifest.webmanifest',
   './icons/icon-192.png',

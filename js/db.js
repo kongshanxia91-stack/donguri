@@ -1,10 +1,10 @@
 // ============================================================
 // db.js — IndexedDB ラッパー(端末内完結・仕様書5章)
-// stores: tasks / logs / goals / achievements / profile / meta
+// stores: tasks / logs / goals / achievements / profile / meta / videos / videoLogs
 // ============================================================
 
 const DB_NAME = 'donguri-rehab';
-const DB_VER = 1;
+const DB_VER = 2;
 let _db = null;
 
 export function uuid() {
@@ -48,6 +48,13 @@ export function openDB() {
       }
       if (!db.objectStoreNames.contains('meta')) {
         db.createObjectStore('meta', { keyPath: 'key' });
+      }
+      if (!db.objectStoreNames.contains('videos')) {
+        db.createObjectStore('videos', { keyPath: 'id' });
+      }
+      if (!db.objectStoreNames.contains('videoLogs')) {
+        // 1日1件、日付そのものがキー(自然に上書きされる)
+        db.createObjectStore('videoLogs', { keyPath: 'date' });
       }
     };
     req.onsuccess = () => { _db = req.result; resolve(_db); };
@@ -118,6 +125,42 @@ export function newGoal(data) {
   };
 }
 
+// ---- RehabVideo(リハビリ動画ログ機能) ----
+export async function getVideos({ includeArchived = false } = {}) {
+  const list = await all('videos');
+  list.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+  return includeArchived ? list : list.filter(v => !v.archived);
+}
+export function newVideo(data) {
+  return {
+    id: uuid(), videoId: '', title: '',
+    archived: false, createdAt: new Date().toISOString(), sortOrder: Date.now(),
+    ...data,
+  };
+}
+
+// ---- VideoLog(1日1件、dateがそのままキー) ----
+export async function getVideoLog(date) {
+  return get('videoLogs', date);
+}
+export async function setVideoLog(date, patch) {
+  const existing = await getVideoLog(date);
+  const log = {
+    date, videoId: '', videoTitle: '', watchRatio: 0, completed: false,
+    painBefore: null, painAfter: null, memo: '',
+    ...existing,
+    datetime: new Date().toISOString(),
+    ...patch,
+  };
+  await put('videoLogs', log);
+  return log;
+}
+export async function getAllVideoLogs() {
+  const list = await all('videoLogs');
+  list.sort((a, b) => b.date.localeCompare(a.date));
+  return list;
+}
+
 // ---- Profile ----
 const DEFAULT_PROFILE = {
   id: 'me', squirrelName: 'くるみ', squirrelLevel: 1,
@@ -134,20 +177,22 @@ export async function saveProfile(p) { await put('profile', { ...p, id: 'me' });
 
 // ---- バックアップ ----
 export async function exportAll() {
-  const [tasks, logs, goals, achievements, profile] = await Promise.all([
-    all('tasks'), all('logs'), all('goals'), all('achievements'), getProfile(),
+  const [tasks, logs, goals, achievements, profile, videos, videoLogs] = await Promise.all([
+    all('tasks'), all('logs'), all('goals'), all('achievements'), getProfile(), all('videos'), all('videoLogs'),
   ]);
-  return { app: 'donguri-rehab', version: 1, exportedAt: new Date().toISOString(), tasks, logs, goals, achievements, profile };
+  return { app: 'donguri-rehab', version: 1, exportedAt: new Date().toISOString(), tasks, logs, goals, achievements, profile, videos, videoLogs };
 }
 export async function importAll(data) {
   if (data?.app !== 'donguri-rehab') throw new Error('形式が違います');
-  await Promise.all(['tasks', 'logs', 'goals', 'achievements'].map(clear));
+  await Promise.all(['tasks', 'logs', 'goals', 'achievements', 'videos', 'videoLogs'].map(clear));
   for (const t of data.tasks ?? []) await put('tasks', t);
   for (const l of data.logs ?? []) await put('logs', l);
   for (const g of data.goals ?? []) await put('goals', g);
   for (const a of data.achievements ?? []) await put('achievements', a);
+  for (const v of data.videos ?? []) await put('videos', v);
+  for (const vl of data.videoLogs ?? []) await put('videoLogs', vl);
   if (data.profile) await saveProfile({ ...DEFAULT_PROFILE, ...data.profile });
 }
 export async function wipeAll() {
-  await Promise.all(['tasks', 'logs', 'goals', 'achievements', 'profile', 'meta'].map(clear));
+  await Promise.all(['tasks', 'logs', 'goals', 'achievements', 'profile', 'meta', 'videos', 'videoLogs'].map(clear));
 }

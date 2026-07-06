@@ -10,6 +10,7 @@ import { initGoals, render as renderGoals } from './goals.js';
 import { render as renderCollection } from './collection.js';
 import { initStats, render as renderStats } from './stats.js';
 import { initMinigame, openMinigame } from './minigame.js';
+import { initVideo, render as renderVideo, teardown as teardownVideo } from './video.js';
 
 let scene = null;
 let profile = null;
@@ -38,6 +39,7 @@ async function boot() {
   initNoteModal();
   initMinigame();
   $('#btn-play-minigame').addEventListener('click', () => openMinigame());
+  initVideo();
 
   // ストリーク整合(未達成のまま日付が変わっていたらリセット・6.4)
   profile = await Game.reconcileStreak();
@@ -88,6 +90,7 @@ async function switchView(name) {
   if (name === 'goals') await renderGoals();
   if (name === 'collection') await renderCollection();
   if (name === 'stats') await renderStats();
+  if (name === 'video') { await renderVideo(); } else { teardownVideo(); }
 }
 
 // ---------- ヘッダー ----------
